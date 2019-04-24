@@ -1,0 +1,53 @@
+﻿#pragma kernel CSMain
+
+struct MeteoriteState
+{
+    float3 Position;
+    float3 Rotation;
+    float4x4 Mat;
+};
+
+RWStructuredBuffer<MeteoriteState> MeteoritesState;
+float4x4 ParentMat;
+
+#define THREAD_X 1024
+#define THREAD_Y 1
+#define THREAD_Z 1
+
+[numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
+void CSMain(uint3 id: SV_DispatchThreadID)
+{
+    uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
+    float3 p = MeteoritesState[threadIdx].Position;
+    float3 r = MeteoritesState[threadIdx].Rotation;
+    
+    // rotation z
+    float4x4 mat_rz = {
+        cos(r.z), 0, sin(r.z), 0,
+        0, 1, 0, 0,
+        - sin(r.z), 0, cos(r.z), 0,
+        0, 0, 0, 1
+    };
+    // rotation x
+    float4x4 mat_rx = {
+        1, 0, 0, 0,
+        0, cos(r.x), -sin(r.x), 0,
+        0, sin(r.x), cos(r.x), 0,
+        0, 0, 0, 1
+    };
+    // rotation y
+    float4x4 mat_ry = {
+        cos(r.y), 0, sin(r.y), 0,
+        0, 1, 0, 0,
+        - sin(r.y), 0, cos(r.y), 0,
+        0, 0, 0, 1
+    };
+    // position
+    float4x4 mat_p = {
+        1, 0, 0, p.x,
+        0, 1, 0, p.y,
+        0, 0, 1, p.z,
+        0, 0, 0, 1,
+    };
+    MeteoritesState[threadIdx].Mat = mul(ParentMat, mul(mat_rz, mul(mat_rx, mul(mat_ry, mat_p))));
+}
