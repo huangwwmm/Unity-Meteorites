@@ -17,7 +17,7 @@ public class Player : MonoBehaviour
 		transform.eulerAngles = rotation;
 
 		Vector3 position = transform.localPosition;
-		position += transform.forward * Time.deltaTime
+		position -= transform.forward * Speed * Time.deltaTime
 			* (Input.GetKey(KeyCode.UpArrow)
 				? 1.0f
 				: Input.GetKey(KeyCode.DownArrow)

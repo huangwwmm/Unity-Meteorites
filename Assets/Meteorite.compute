@@ -12,11 +12,22 @@ struct MeteoriteState
     float4x4 MatM;
     // MVP矩阵，用于转换Vertex
     float4x4 MatMVP;
+    // 是否显示
+    float Alpha;
 };
 
-RWStructuredBuffer<MeteoriteState> MeteoritesState;
-float4x4 PARENT_MAT_M;
-float4x4 PARENT_MAT_MVP;
+struct GlobalState
+{
+    float4x4 MatM;
+    float4x4 MatMVP;
+    float3 CameraLocalPosition;
+    float3 CameraLocalForward;
+};
+
+RWStructuredBuffer<MeteoriteState> _MeteoritesState;
+RWStructuredBuffer<GlobalState> _GlobalState;
+// x:最小显示距离 y:开始FadeOut的距离 z:最大显示距离 w:暂时没用到
+float4 _Param1;
 
 #define THREAD_X 1024
 #define THREAD_Y 1
@@ -26,50 +37,68 @@ float4x4 PARENT_MAT_MVP;
 void CSMain(uint3 id: SV_DispatchThreadID)
 {
     uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
-    float3 p = MeteoritesState[threadIdx].LocalPosition;
-    float3 r = MeteoritesState[threadIdx].LocalRotation;
-    float3 s = MeteoritesState[threadIdx].LocalScale;
     
-    // position
-    float4x4 mat_local_p = {
-        1, 0, 0, p.x,
-        0, 1, 0, p.y,
-        0, 0, 1, p.z,
-        0, 0, 0, 1,
-    };
-    // rotation z
-    float4x4 mat_local_rz = {
-        cos(r.z), 0, sin(r.z), 0,
-        0, 1, 0, 0,
-        - sin(r.z), 0, cos(r.z), 0,
-        0, 0, 0, 1
-    };
-    // rotation x
-    float4x4 mat_local_rx = {
-        1, 0, 0, 0,
-        0, cos(r.x), -sin(r.x), 0,
-        0, sin(r.x), cos(r.x), 0,
-        0, 0, 0, 1
-    };
-    // rotation y
-    float4x4 mat_local_ry = {
-        cos(r.y), 0, sin(r.y), 0,
-        0, 1, 0, 0,
-        - sin(r.y), 0, cos(r.y), 0,
-        0, 0, 0, 1
-    };
-    // scale
-    float4x4 mat_local_s = {
-        s.x, 0, 0, 1,
-        0, s.y, 0, 1,
-        0, 0, s.z, 1,
-        0, 0, 0, 1
-    };
-    // 模型空间到父节点空间的平移旋转矩阵
-    float4x4 mat_local_pr = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
-    // 模型空间到父节点空间的平移旋转缩放
-    float4x4 mat_local_prs = mul(mat_local_pr, mat_local_s);
-    
-    MeteoritesState[threadIdx].MatM = mul(PARENT_MAT_M, mat_local_pr);
-    MeteoritesState[threadIdx].MatMVP = mul(PARENT_MAT_MVP, mat_local_prs);
+    float3 p = _MeteoritesState[threadIdx].LocalPosition;
+    float3 p2camera = p - _GlobalState[0].CameraLocalPosition;
+    float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, p2camera);
+    if (distanceToCamera < _Param1.z && distanceToCamera > 0)
+    {
+        if(distanceToCamera < _Param1.y)
+        {
+            _MeteoritesState[threadIdx].Alpha = saturate(distanceToCamera / (_Param1.y - _Param1.x));
+        }
+        else
+        {
+            _MeteoritesState[threadIdx].Alpha = 1;
+        }
+        float3 r = _MeteoritesState[threadIdx].LocalRotation;
+        float3 s = _MeteoritesState[threadIdx].LocalScale;
+        
+        // position
+        float4x4 mat_local_p = {
+            1, 0, 0, p.x,
+            0, 1, 0, p.y,
+            0, 0, 1, p.z,
+            0, 0, 0, 1,
+        };
+        // rotation z
+        float4x4 mat_local_rz = {
+            cos(r.z), 0, sin(r.z), 0,
+            0, 1, 0, 0,
+            - sin(r.z), 0, cos(r.z), 0,
+            0, 0, 0, 1
+        };
+        // rotation x
+        float4x4 mat_local_rx = {
+            1, 0, 0, 0,
+            0, cos(r.x), -sin(r.x), 0,
+            0, sin(r.x), cos(r.x), 0,
+            0, 0, 0, 1
+        };
+        // rotation y
+        float4x4 mat_local_ry = {
+            cos(r.y), 0, sin(r.y), 0,
+            0, 1, 0, 0,
+            - sin(r.y), 0, cos(r.y), 0,
+            0, 0, 0, 1
+        };
+        // scale
+        float4x4 mat_local_s = {
+            s.x, 0, 0, 1,
+            0, s.y, 0, 1,
+            0, 0, s.z, 1,
+            0, 0, 0, 1
+        };
+        // 模型空间到父节点空间的平移旋转矩阵
+        float4x4 mat_local_pr = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
+        // 模型空间到父节点空间的平移旋转缩放
+        float4x4 mat_local_prs = mul(mat_local_pr, mat_local_s);
+        
+        _MeteoritesState[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_pr);
+        _MeteoritesState[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_prs);
+    }
+    else
+    {
+        _MeteoritesState[threadIdx].Alpha = 0;
+    }
 }

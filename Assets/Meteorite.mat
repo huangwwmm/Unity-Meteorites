@@ -64,6 +64,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1.2
     - _DstBlend: 0
+    - _FadeOutEndOffset: 30
     - _GlossMapScale: 0.47
     - _Glossiness: 0.2
     - _GlossyReflections: 1
@@ -75,6 +76,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _StartFadeOutRange: 1
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

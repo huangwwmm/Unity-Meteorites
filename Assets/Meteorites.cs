@@ -5,7 +5,6 @@ using UnityEngine.Rendering;
 [ExecuteInEditMode]
 public class Meteorites : MonoBehaviour
 {
-
 	/// <summary>
 	/// 用来渲染这个陨石群的相机
 	/// </summary>
@@ -42,6 +41,9 @@ public class Meteorites : MonoBehaviour
 	/// 缩放的xyz轴之间的最大Offset，如果为0那么就是uniform scale
 	/// </summary>
 	public float ScaleMaxOffset;
+	public float MinDisplayDistanceToCamera;
+	public float MinFadeOutDistanceToCamera;
+	public float MaxDisplayDistanceToCamera;
 #if UNITY_EDITOR
 	/// <summary>
 	/// Scene、Game窗口的MVP矩阵公用一块显存，而计算Scene在Game之后
@@ -54,6 +56,15 @@ public class Meteorites : MonoBehaviour
 	/// </summary>
 	public RendererIn MyRendererIn;
 #endif
+
+	/// <summary>
+	/// 所有陨石共用的状态，虽然是数组，但其实只有1个
+	/// </summary>
+	private GlobalState[] m_GlobalState;
+	/// <summary>
+	/// <see cref="m_GlobalState"/>在显存中的Buffer
+	/// </summary>
+	private ComputeBuffer m_CB_GlobalState;
 
 	/// <summary>
 	/// CPU计算出的陨石的Transform信息
@@ -97,12 +108,15 @@ public class Meteorites : MonoBehaviour
 	{
 		m_CS_MainKernel = ComputeShader.FindKernel("CSMain");
 
+		m_GlobalState = new GlobalState[1];
+		m_CB_GlobalState = new ComputeBuffer(1, Marshal.SizeOf(typeof(GlobalState)));
+
 		m_MeteoritesState = new MeteoriteState[Count];
 		for (int iRole = 0; iRole < Count; iRole++)
 		{
-			m_MeteoritesState[iRole].Position = RandomUtility.RandomInSphere(DisperseRadius);
-			m_MeteoritesState[iRole].Rotation = RandomUtility.RandomEulerAngles() * Mathf.Deg2Rad;
-			m_MeteoritesState[iRole].Scale = RandomUtility.RandomScale(MinScale, MaxScale, ScaleMaxOffset);
+			m_MeteoritesState[iRole].LocalPosition = RandomUtility.RandomInSphere(DisperseRadius);
+			m_MeteoritesState[iRole].LocalRotation = RandomUtility.RandomEulerAngles() * Mathf.Deg2Rad;
+			m_MeteoritesState[iRole].LocalScale = RandomUtility.RandomScale(MinScale, MaxScale, ScaleMaxOffset);
 		}
 		m_CB_MeteoritesState = new ComputeBuffer(Count, Marshal.SizeOf(typeof(MeteoriteState)));
 		m_CB_MeteoritesState.SetData(m_MeteoritesState);
@@ -113,8 +127,11 @@ public class Meteorites : MonoBehaviour
 			, ComputeBufferType.IndirectArguments);
 		m_CB_BufferArgs.SetData(m_BufferArgs);
 
-		ComputeShader.SetBuffer(m_CS_MainKernel, "MeteoritesState", m_CB_MeteoritesState);
-		Material.SetBuffer("MeteoritesState", m_CB_MeteoritesState);
+		ComputeShader.SetBuffer(m_CS_MainKernel, "_GlobalState", m_CB_GlobalState);
+		ComputeShader.SetBuffer(m_CS_MainKernel, "_MeteoritesState", m_CB_MeteoritesState);
+		ComputeShader.SetVector("_Param1", new Vector4(MinDisplayDistanceToCamera, MinFadeOutDistanceToCamera, MaxDisplayDistanceToCamera, 0));
+
+		Material.SetBuffer("_MeteoritesState", m_CB_MeteoritesState);
 
 		m_LimitBounds = new Bounds(Vector3.zero, Vector3.one * DisperseRadius * 2);
 #if UNITY_EDITOR
@@ -132,14 +149,17 @@ public class Meteorites : MonoBehaviour
 		UnityEditor.SceneView.onSceneGUIDelegate -= OnSceneGUI;
 #endif
 
+		m_CB_GlobalState.Release();
 		m_CB_MeteoritesState.Release();
 		m_CB_BufferArgs.Release();
 	}
 
 	protected void OnEnable()
 	{
+		// TEMP
 		Application.targetFrameRate = 2048;
 		QualitySettings.vSyncCount = 0;
+		Camera.depthTextureMode = DepthTextureMode.Depth;
 
 		StartRendering();
 	}
@@ -184,12 +204,16 @@ public class Meteorites : MonoBehaviour
 	private void DoUpdate(Camera camera)
 	{
 		m_LimitBounds.center = transform.position;
+
 		Matrix4x4 mat_M = transform.localToWorldMatrix;
 		Matrix4x4 mat_V = camera.worldToCameraMatrix;
 		Matrix4x4 mat_P = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
-		Matrix4x4 mat_MVP = mat_P * mat_V * mat_M;
-		ComputeShader.SetMatrix("PARENT_MAT_M", mat_M);
-		ComputeShader.SetMatrix("PARENT_MAT_MVP", mat_MVP);
+		m_GlobalState[0].MatM = mat_M;
+		m_GlobalState[0].MatMVP = mat_P * mat_V * mat_M;
+		m_GlobalState[0].CameraLocalPosition = transform.InverseTransformPoint(camera.transform.position);
+		m_GlobalState[0].CameraLocalForward = transform.InverseTransformPoint(camera.transform.forward);
+		m_CB_GlobalState.SetData(m_GlobalState);
+
 		ComputeShader.Dispatch(m_CS_MainKernel, Count, 1, 1);
 	}
 
@@ -211,6 +235,15 @@ public class Meteorites : MonoBehaviour
 			, camera);
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	private struct GlobalState
+	{
+		public Matrix4x4 MatM;
+		public Matrix4x4 MatMVP;
+		public Vector3 CameraLocalPosition;
+		public Vector3 CameraLocalForward;
+	}
+
 	/// <summary>
 	/// 陨石的Transform信息
 	/// 不命名为MeteoriteTransform是因为陨石以后可能会运动，那这里就需要存速度、角速度等信息
@@ -218,11 +251,12 @@ public class Meteorites : MonoBehaviour
 	[StructLayout(LayoutKind.Sequential)]
 	private struct MeteoriteState
 	{
-		public Vector3 Position;
-		public Vector3 Rotation;
-		public Vector3 Scale;
-		public Matrix4x4 MatM;
-		public Matrix4x4 MatMVP;
+		public Vector3 LocalPosition;
+		public Vector3 LocalRotation;
+		public Vector3 LocalScale;
+		public Matrix4x4 Dummy1;
+		public Matrix4x4 Dummy2;
+		public float Dummy3;
 	}
 
 #if UNITY_EDITOR
