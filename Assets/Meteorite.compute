@@ -92,8 +92,8 @@ void CSMain(uint3 id: SV_DispatchThreadID)
         // 模型空间到父节点空间的平移旋转矩阵
         float4x4 mat_local_pr = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
         // 模型空间到父节点空间的平移旋转缩放
-        float4x4 mat_local_prs = mul(mat_local_pr, mat_local_s);
-        
+        // float4x4 mat_local_prs = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mul(mat_local_ry, mat_local_s)))); 缩放有问题先注掉(旋转也有问题但是不影响效果)
+        float4x4 mat_local_prs = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
         _MeteoritesState[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_pr);
         _MeteoritesState[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_prs);
     }

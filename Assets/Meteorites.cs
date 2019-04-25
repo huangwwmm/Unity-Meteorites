@@ -211,7 +211,7 @@ public class Meteorites : MonoBehaviour
 		m_GlobalState[0].MatM = mat_M;
 		m_GlobalState[0].MatMVP = mat_P * mat_V * mat_M;
 		m_GlobalState[0].CameraLocalPosition = transform.InverseTransformPoint(camera.transform.position);
-		m_GlobalState[0].CameraLocalForward = transform.InverseTransformPoint(camera.transform.forward);
+		m_GlobalState[0].CameraLocalForward = transform.InverseTransformDirection(camera.transform.forward);
 		m_CB_GlobalState.SetData(m_GlobalState);
 
 		ComputeShader.Dispatch(m_CS_MainKernel, Count, 1, 1);
