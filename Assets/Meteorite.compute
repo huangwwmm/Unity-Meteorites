@@ -2,13 +2,21 @@
 
 struct MeteoriteState
 {
-    float3 Position;
-    float3 Rotation;
-    float4x4 Mat;
+    // 相对于父节点的坐标
+    float3 LocalPosition;
+    // 相对于父节点的旋转
+    float3 LocalRotation;
+    // 相对于父节点的缩放
+    float3 LocalScale;
+    // 没有缩放的M矩阵，用于转换Normal
+    float4x4 MatM;
+    // MVP矩阵，用于转换Vertex
+    float4x4 MatMVP;
 };
 
 RWStructuredBuffer<MeteoriteState> MeteoritesState;
-float4x4 ParentMat;
+float4x4 PARENT_MAT_M;
+float4x4 PARENT_MAT_MVP;
 
 #define THREAD_X 1024
 #define THREAD_Y 1
@@ -18,36 +26,50 @@ float4x4 ParentMat;
 void CSMain(uint3 id: SV_DispatchThreadID)
 {
     uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
-    float3 p = MeteoritesState[threadIdx].Position;
-    float3 r = MeteoritesState[threadIdx].Rotation;
+    float3 p = MeteoritesState[threadIdx].LocalPosition;
+    float3 r = MeteoritesState[threadIdx].LocalRotation;
+    float3 s = MeteoritesState[threadIdx].LocalScale;
     
+    // position
+    float4x4 mat_local_p = {
+        1, 0, 0, p.x,
+        0, 1, 0, p.y,
+        0, 0, 1, p.z,
+        0, 0, 0, 1,
+    };
     // rotation z
-    float4x4 mat_rz = {
+    float4x4 mat_local_rz = {
         cos(r.z), 0, sin(r.z), 0,
         0, 1, 0, 0,
         - sin(r.z), 0, cos(r.z), 0,
         0, 0, 0, 1
     };
     // rotation x
-    float4x4 mat_rx = {
+    float4x4 mat_local_rx = {
         1, 0, 0, 0,
         0, cos(r.x), -sin(r.x), 0,
         0, sin(r.x), cos(r.x), 0,
         0, 0, 0, 1
     };
     // rotation y
-    float4x4 mat_ry = {
+    float4x4 mat_local_ry = {
         cos(r.y), 0, sin(r.y), 0,
         0, 1, 0, 0,
         - sin(r.y), 0, cos(r.y), 0,
         0, 0, 0, 1
     };
-    // position
-    float4x4 mat_p = {
-        1, 0, 0, p.x,
-        0, 1, 0, p.y,
-        0, 0, 1, p.z,
-        0, 0, 0, 1,
+    // scale
+    float4x4 mat_local_s = {
+        s.x, 0, 0, 1,
+        0, s.y, 0, 1,
+        0, 0, s.z, 1,
+        0, 0, 0, 1
     };
-    MeteoritesState[threadIdx].Mat = mul(ParentMat, mul(mat_rz, mul(mat_rx, mul(mat_ry, mat_p))));
+    // 模型空间到父节点空间的平移旋转矩阵
+    float4x4 mat_local_pr = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
+    // 模型空间到父节点空间的平移旋转缩放
+    float4x4 mat_local_prs = mul(mat_local_pr, mat_local_s);
+    
+    MeteoritesState[threadIdx].MatM = mul(PARENT_MAT_M, mat_local_pr);
+    MeteoritesState[threadIdx].MatMVP = mul(PARENT_MAT_MVP, mat_local_prs);
 }

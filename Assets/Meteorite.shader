@@ -20,11 +20,12 @@
             {
                 float3 Position;
                 float3 Rotation;
-                float4x4 Mat;
+                float3 Scale;
+                float4x4 MatM;
+                float4x4 MatMVP;
             };
             
             sampler2D _MainTex;
-            float4 _MainTex_ST;
             StructuredBuffer<MeteoriteState> MeteoritesState;
             
             struct appdata_custom
@@ -39,24 +40,22 @@
             {
                 float4 pos: SV_POSITION;
                 float2 uv: TEXCOORD0;
-                float3 normal: NORMAL;
+                float lightStrength: TEXCOORD1;
             };
             
             v2f vert(appdata_custom v)
             {
-                float4 wpos = mul(MeteoritesState[v.instanceID].Mat, v.vertex);
-                
                 v2f o;
-                o.pos = UnityObjectToClipPos(float4(wpos.xyz, 1));
+                o.pos = mul(MeteoritesState[v.instanceID].MatMVP, v.vertex);
                 o.uv = v.texcoord.xy;
-                o.normal = v.normal;
+                o.lightStrength = dot(mul(MeteoritesState[v.instanceID].MatM, v.normal), _WorldSpaceLightPos0.xyz);
                 return o;
             }
             
             fixed4 frag(v2f i): SV_Target
             {
                 fixed4 color = tex2D(_MainTex, i.uv);
-                color *= dot(i.normal, _WorldSpaceLightPos0.xyz);
+                color *= i.lightStrength;
                 return color;
             }
             ENDCG
