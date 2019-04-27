@@ -1265,7 +1265,7 @@ MonoBehaviour:
   ScaleMaxOffset: 0.1
   MinDisplayToCamera: 0.5
   MaxDisplayDistanceToCamera: 36
-  MyRendererIn: 0
+  MyRendererIn: 1
 --- !u!4 &2021711718
 Transform:
   m_ObjectHideFlags: 0
