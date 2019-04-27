@@ -12,8 +12,8 @@ struct MeteoriteState
     float4x4 MatM;
     // MVP矩阵，用于转换Vertex
     float4x4 MatMVP;
-    // 是否显示
-    float Alpha;
+    // 是否显示 0:显示 1:不显示
+    int Display;
 };
 
 struct GlobalState
@@ -26,7 +26,7 @@ struct GlobalState
 
 RWStructuredBuffer<MeteoriteState> _MeteoritesState;
 RWStructuredBuffer<GlobalState> _GlobalState;
-// x:最小显示距离 y:开始FadeOut的距离 z:最大显示距离 w:暂时没用到
+// x:最小显示距离 y:最大显示距离 zw:暂时没用到
 float4 _Param1;
 
 #define THREAD_X 1024
@@ -38,34 +38,33 @@ void CSMain(uint3 id: SV_DispatchThreadID)
 {
     uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
     
-    float3 p = _MeteoritesState[threadIdx].LocalPosition;
-    float3 p2camera = p - _GlobalState[0].CameraLocalPosition;
-    float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, p2camera);
-    if (distanceToCamera < _Param1.z && distanceToCamera > 0)
+    float3 t = _MeteoritesState[threadIdx].LocalPosition;
+    float3 me2camera = t - _GlobalState[0].CameraLocalPosition;
+    float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, me2camera);
+    if (distanceToCamera < _Param1.y && distanceToCamera > 0)
     {
-        if(distanceToCamera < _Param1.y)
-        {
-            _MeteoritesState[threadIdx].Alpha = saturate(distanceToCamera / (_Param1.y - _Param1.x));
-        }
-        else
-        {
-            _MeteoritesState[threadIdx].Alpha = 1;
-        }
         float3 r = _MeteoritesState[threadIdx].LocalRotation;
         float3 s = _MeteoritesState[threadIdx].LocalScale;
         
-        // position
-        float4x4 mat_local_p = {
-            1, 0, 0, p.x,
-            0, 1, 0, p.y,
-            0, 0, 1, p.z,
-            0, 0, 0, 1,
+        _MeteoritesState[threadIdx].Display = 0;
+        if(distanceToCamera < _Param1.x)
+        {
+            t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
+        }
+        
+        // FIXME: 这里的旋转计算错了，反正旋转也是随机的，错了也不影响效果，暂时先不管。之后有时间了再修
+        // scale
+        float4x4 mat_local_s = {
+            s.x, 0, 0, 0,
+            0, s.y, 0, 0,
+            0, 0, s.z, 0,
+            0, 0, 0, 1
         };
         // rotation z
         float4x4 mat_local_rz = {
-            cos(r.z), 0, sin(r.z), 0,
-            0, 1, 0, 0,
-            - sin(r.z), 0, cos(r.z), 0,
+            cos(r.z), sin(r.z), 0, 0,
+            - sin(r.z), cos(r.z), 0, 0,
+            0, 0, 1, 0,
             0, 0, 0, 1
         };
         // rotation x
@@ -82,23 +81,22 @@ void CSMain(uint3 id: SV_DispatchThreadID)
             - sin(r.y), 0, cos(r.y), 0,
             0, 0, 0, 1
         };
-        // scale
-        float4x4 mat_local_s = {
-            s.x, 0, 0, 1,
-            0, s.y, 0, 1,
-            0, 0, s.z, 1,
-            0, 0, 0, 1
+        // position
+        float4x4 mat_local_t = {
+            1, 0, 0, t.x,
+            0, 1, 0, t.y,
+            0, 0, 1, t.z,
+            0, 0, 0, 1,
         };
         // 模型空间到父节点空间的平移旋转矩阵
-        float4x4 mat_local_pr = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
+        float4x4 mat_local_tr = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mat_local_rz)));
         // 模型空间到父节点空间的平移旋转缩放
-        // float4x4 mat_local_prs = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mul(mat_local_ry, mat_local_s)))); 缩放有问题先注掉(旋转也有问题但是不影响效果)
-        float4x4 mat_local_prs = mul(mat_local_p, mul(mat_local_rz, mul(mat_local_rx, mat_local_ry)));
-        _MeteoritesState[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_pr);
-        _MeteoritesState[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_prs);
+        float4x4 mat_local_trs = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mul(mat_local_rz, mat_local_s))));
+        _MeteoritesState[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_tr);
+        _MeteoritesState[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_trs);
     }
     else
     {
-        _MeteoritesState[threadIdx].Alpha = 0;
+        _MeteoritesState[threadIdx].Display = 1;
     }
 }

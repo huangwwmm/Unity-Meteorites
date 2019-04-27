@@ -41,8 +41,13 @@ public class Meteorites : MonoBehaviour
 	/// 缩放的xyz轴之间的最大Offset，如果为0那么就是uniform scale
 	/// </summary>
 	public float ScaleMaxOffset;
-	public float MinDisplayDistanceToCamera;
-	public float MinFadeOutDistanceToCamera;
+	/// <summary>
+	/// 陨石到相机的最小距离，相机接近时陨石会被推开
+	/// </summary>
+	public float MinDisplayToCamera;
+	/// <summary>
+	/// 会显示陨石的最大距离，超过这个距离，陨石会被放在一个不可能看到的位置
+	/// </summary>
 	public float MaxDisplayDistanceToCamera;
 #if UNITY_EDITOR
 	/// <summary>
@@ -129,7 +134,7 @@ public class Meteorites : MonoBehaviour
 
 		ComputeShader.SetBuffer(m_CS_MainKernel, "_GlobalState", m_CB_GlobalState);
 		ComputeShader.SetBuffer(m_CS_MainKernel, "_MeteoritesState", m_CB_MeteoritesState);
-		ComputeShader.SetVector("_Param1", new Vector4(MinDisplayDistanceToCamera, MinFadeOutDistanceToCamera, MaxDisplayDistanceToCamera, 0));
+		ComputeShader.SetVector("_Param1", new Vector4(MinDisplayToCamera, MaxDisplayDistanceToCamera, 0, 0));
 
 		Material.SetBuffer("_MeteoritesState", m_CB_MeteoritesState);
 
@@ -256,7 +261,7 @@ public class Meteorites : MonoBehaviour
 		public Vector3 LocalScale;
 		public Matrix4x4 Dummy1;
 		public Matrix4x4 Dummy2;
-		public float Dummy3;
+		public int Dummy3;
 	}
 
 #if UNITY_EDITOR

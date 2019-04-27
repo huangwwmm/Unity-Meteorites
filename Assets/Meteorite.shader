@@ -18,8 +18,6 @@
                 Mode Off
             }
             AlphaTest Off
-            Blend SrcAlpha OneMinusSrcAlpha
-            Cull Off
             
             CGPROGRAM
             
@@ -41,7 +39,7 @@
                 // MVP矩阵，用于转换Vertex
                 float4x4 MatMVP;
                 // 是否显示
-                float Alpha;
+                int Display;
             };
             
             sampler2D _MainTex;
@@ -59,27 +57,26 @@
             
             struct v2f
             {
+                uint instanceID: SV_InstanceID;
                 float4 pos: SV_POSITION;
                 float2 uv: TEXCOORD0;
-                float2 lightStrengthAndAlpha: TEXCOORD1;
+                float3 normal: NORMAL; 
             };
             
             v2f vert(appdata_custom v)
             {
                 v2f o;
+                o.instanceID = v.instanceID;
+                o.pos = _MeteoritesState[v.instanceID].Display * float4(99999, 99999, 99999, 0) + mul(_MeteoritesState[v.instanceID].MatMVP, v.vertex);
                 o.uv = v.texcoord.xy;
-                
-                o.pos = mul(_MeteoritesState[v.instanceID].MatMVP, v.vertex);
-                o.lightStrengthAndAlpha.x = dot(mul(_MeteoritesState[v.instanceID].MatM, v.normal), _WorldSpaceLightPos0.xyz);
-                o.lightStrengthAndAlpha.y = _MeteoritesState[v.instanceID].Alpha;
+                o.normal = v.normal;
                 return o;
             }
             
             fixed4 frag(v2f i): SV_Target
             {
                 fixed4 color = tex2D(_MainTex, i.uv);
-                color.xyz *= i.lightStrengthAndAlpha.x;
-                color.a = i.lightStrengthAndAlpha.y;
+                color.xyz *= dot(mul(_MeteoritesState[i.instanceID].MatM, i.normal), _WorldSpaceLightPos0.xyz);
                 return color;
             }
             ENDCG

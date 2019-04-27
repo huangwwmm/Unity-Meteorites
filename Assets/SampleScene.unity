@@ -384,7 +384,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 189925810}
-  m_LocalRotation: {x: -1.9562693e-11, y: 0.9998346, z: 0.01818949, w: 0.0000000010752211}
+  m_LocalRotation: {x: 1.955922e-11, y: 0.9998346, z: 0.01818949, w: -0.0000000010752209}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -544,7 +544,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 534669902}
-  m_LocalRotation: {x: -3.9121918e-11, y: 0.9998346, z: 0.018189492, w: 0.000000002150442}
+  m_LocalRotation: {x: 3.9121918e-11, y: 0.9998346, z: 0.018189492, w: -0.000000002150442}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -1256,16 +1256,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Camera: {fileID: 534669904}
   Mesh: {fileID: 4300002, guid: de406fdc0ab0e8147b5ab4cd324527c6, type: 3}
-  Material: {fileID: 2100000, guid: 8afe50ec143f4364a85d36c13cbace7f, type: 2}
+  Material: {fileID: 2100000, guid: 2261d45612630bf4db9a5afa99b1252d, type: 2}
   ComputeShader: {fileID: 7200000, guid: ef4ef2ed5c8033442a030d013a92b764, type: 3}
-  Count: 10000
-  DisperseRadius: 10
+  Count: 20000
+  DisperseRadius: 50
   MinScale: {x: 0.8, y: 0.8, z: 0.8}
   MaxScale: {x: 1.2, y: 1.2, z: 1.2}
   ScaleMaxOffset: 0.1
-  MinDisplayDistanceToCamera: 0.2
-  MinFadeOutDistanceToCamera: 0.5
-  MaxDisplayDistanceToCamera: 20
+  MinDisplayToCamera: 0.5
+  MaxDisplayDistanceToCamera: 36
   MyRendererIn: 0
 --- !u!4 &2021711718
 Transform:

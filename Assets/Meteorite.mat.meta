@@ -1,17 +1,8 @@
 fileFormatVersion: 2
-guid: 8afe50ec143f4364a85d36c13cbace7f
-labels:
-- asteroids
-- debris
-- gameready
-- lowpoly
-- pbr
-- rocks
-- sf
-- space
+guid: 2261d45612630bf4db9a5afa99b1252d
 NativeFormatImporter:
   externalObjects: {}
-  mainObjectFileID: 0
+  mainObjectFileID: 2100000
   userData: 
   assetBundleName: 
   assetBundleVariant: 

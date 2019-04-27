@@ -10,7 +10,7 @@ public static class RandomUtility
 		// https://en.wikipedia.org/wiki/Spherical_coordinate_system
 		// radius的平方再开方，是为了避免随机到的位置集中在球体中心
 		float r = Mathf.Sqrt(Random.Range(0, radius * radius));
-		float theta = Random.Range(0, 360);
+		float theta = Random.Range(Mathf.Epsilon, 360);
 		float phi = Random.Range(0, 360);
 		float sinTheta = Mathf.Sin(theta);
 		return new Vector3(r * sinTheta * Mathf.Cos(phi)
