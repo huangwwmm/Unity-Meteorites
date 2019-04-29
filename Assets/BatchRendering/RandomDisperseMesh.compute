@@ -1,6 +1,6 @@
 ﻿#pragma kernel CSMain
 
-struct MeteoriteState
+struct MeshState
 {
     // 相对于父节点的坐标
     float3 LocalPosition;
@@ -24,13 +24,13 @@ struct GlobalState
     float3 CameraLocalForward;
 };
 
-RWStructuredBuffer<MeteoriteState> _MeteoritesState;
+RWStructuredBuffer<MeshState> _MeshStates;
 RWStructuredBuffer<GlobalState> _GlobalState;
 // x:最小显示距离 y:最大显示距离 zw:暂时没用到
 float4 _Param1;
 
-#define THREAD_X 1024
-#define THREAD_Y 1
+#define THREAD_X 128
+#define THREAD_Y 4
 #define THREAD_Z 1
 
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
@@ -38,15 +38,15 @@ void CSMain(uint3 id: SV_DispatchThreadID)
 {
     uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
     
-    float3 t = _MeteoritesState[threadIdx].LocalPosition;
+    float3 t = _MeshStates[threadIdx].LocalPosition;
     float3 me2camera = t - _GlobalState[0].CameraLocalPosition;
     float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, me2camera);
     if (distanceToCamera < _Param1.y && distanceToCamera > 0)
     {
-        float3 r = _MeteoritesState[threadIdx].LocalRotation;
-        float3 s = _MeteoritesState[threadIdx].LocalScale;
+        float3 r = _MeshStates[threadIdx].LocalRotation;
+        float3 s = _MeshStates[threadIdx].LocalScale;
         
-        _MeteoritesState[threadIdx].Display = 0;
+        _MeshStates[threadIdx].Display = 0;
         if(distanceToCamera < _Param1.x)
         {
             t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
@@ -92,11 +92,11 @@ void CSMain(uint3 id: SV_DispatchThreadID)
         float4x4 mat_local_tr = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mat_local_rz)));
         // 模型空间到父节点空间的平移旋转缩放
         float4x4 mat_local_trs = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mul(mat_local_rz, mat_local_s))));
-        _MeteoritesState[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_tr);
-        _MeteoritesState[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_trs);
+        _MeshStates[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_tr);
+        _MeshStates[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_trs);
     }
     else
     {
-        _MeteoritesState[threadIdx].Display = 1;
+        _MeshStates[threadIdx].Display = 1;
     }
 }

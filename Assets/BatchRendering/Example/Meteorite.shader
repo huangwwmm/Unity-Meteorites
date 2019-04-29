@@ -1,4 +1,4 @@
-﻿Shader "Custom/Meteorite"
+﻿Shader "Custom/RandomDisperseMesh/Meteorite"
 {
     Properties
     {
@@ -26,7 +26,7 @@
             #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
             #pragma target 4.5
             
-            struct MeteoriteState
+            struct MeshState
             {
                 // 相对于父节点的坐标
                 float3 LocalPosition;
@@ -45,7 +45,7 @@
             sampler2D _MainTex;
             uniform float _StartFadeOutRange;
             uniform float _FadeOutEndOffset;
-            StructuredBuffer<MeteoriteState> _MeteoritesState;
+            StructuredBuffer<MeshState> _MeshStates;
             
             struct appdata_custom
             {
@@ -67,7 +67,7 @@
             {
                 v2f o;
                 o.instanceID = v.instanceID;
-                o.pos = _MeteoritesState[v.instanceID].Display * float4(99999, 99999, 99999, 0) + mul(_MeteoritesState[v.instanceID].MatMVP, v.vertex);
+                o.pos = _MeshStates[v.instanceID].Display * float4(99999, 99999, 99999, 0) + mul(_MeshStates[v.instanceID].MatMVP, v.vertex);
                 o.uv = v.texcoord.xy;
                 o.normal = v.normal;
                 return o;
@@ -76,7 +76,7 @@
             fixed4 frag(v2f i): SV_Target
             {
                 fixed4 color = tex2D(_MainTex, i.uv);
-                color.xyz *= dot(mul(_MeteoritesState[i.instanceID].MatM, i.normal), _WorldSpaceLightPos0.xyz);
+                color.xyz *= dot(mul(_MeshStates[i.instanceID].MatM, i.normal), _WorldSpaceLightPos0.xyz);
                 return color;
             }
             ENDCG
