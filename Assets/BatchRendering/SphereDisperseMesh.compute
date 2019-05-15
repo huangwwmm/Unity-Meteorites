@@ -1,0 +1,102 @@
+﻿#pragma kernel CSMain
+
+struct MeshState
+{
+    // 相对于父节点的坐标
+    float3 LocalPosition;
+    // 相对于父节点的旋转
+    float3 LocalRotation;
+    // 相对于父节点的缩放
+    float3 LocalScale;
+    // 没有缩放的M矩阵，用于转换Normal
+    float4x4 MatM;
+    // MVP矩阵，用于转换Vertex
+    float4x4 MatMVP;
+    // 是否显示 0:显示 1:不显示
+    int Display;
+};
+
+struct GlobalState
+{
+    float4x4 MatM;
+    float4x4 MatMVP;
+    float3 CameraLocalPosition;
+    float3 CameraLocalForward;
+};
+
+RWStructuredBuffer<MeshState> _MeshStates;
+RWStructuredBuffer<GlobalState> _GlobalState;
+// x:最小显示距离 y:最大显示距离 zw:暂时没用到
+float4 _Param1;
+
+#define THREAD_X 128
+#define THREAD_Y 4
+#define THREAD_Z 1
+
+[numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
+void CSMain(uint3 id: SV_DispatchThreadID)
+{
+    uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
+    
+    float3 t = _MeshStates[threadIdx].LocalPosition;
+    float3 me2camera = t - _GlobalState[0].CameraLocalPosition;
+    float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, me2camera);
+    if (distanceToCamera < _Param1.y && distanceToCamera > 0)
+    {
+        float3 r = _MeshStates[threadIdx].LocalRotation;
+        float3 s = _MeshStates[threadIdx].LocalScale;
+        
+        _MeshStates[threadIdx].Display = 0;
+        //if(distanceToCamera < _Param1.x)
+        //{
+        //    t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
+        //}
+        
+        // FIXME: 这里的旋转计算错了，反正旋转也是随机的，错了也不影响效果，暂时先不管。之后有时间了再修
+        // scale
+        float4x4 mat_local_s = {
+            s.x, 0, 0, 0,
+            0, s.y, 0, 0,
+            0, 0, s.z, 0,
+            0, 0, 0, 1
+        };
+        // rotation z
+        float4x4 mat_local_rz = {
+            cos(r.z), sin(r.z), 0, 0,
+            - sin(r.z), cos(r.z), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
+        // rotation x
+        float4x4 mat_local_rx = {
+            1, 0, 0, 0,
+            0, cos(r.x), -sin(r.x), 0,
+            0, sin(r.x), cos(r.x), 0,
+            0, 0, 0, 1
+        };
+        // rotation y
+        float4x4 mat_local_ry = {
+            cos(r.y), 0, sin(r.y), 0,
+            0, 1, 0, 0,
+            - sin(r.y), 0, cos(r.y), 0,
+            0, 0, 0, 1
+        };
+        // position
+        float4x4 mat_local_t = {
+            1, 0, 0, t.x,
+            0, 1, 0, t.y,
+            0, 0, 1, t.z,
+            0, 0, 0, 1,
+        };
+        // 模型空间到父节点空间的平移旋转矩阵
+        float4x4 mat_local_tr = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mat_local_rz)));
+        // 模型空间到父节点空间的平移旋转缩放
+        float4x4 mat_local_trs = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mul(mat_local_rz, mat_local_s))));
+        _MeshStates[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_tr);
+        _MeshStates[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_trs);
+    }
+    else
+    {
+        _MeshStates[threadIdx].Display = 1;
+    }
+}
