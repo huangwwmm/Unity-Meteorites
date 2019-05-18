@@ -130,14 +130,9 @@ namespace BatchRendering
 			m_MeshStates = new MeshState[Count];
 			for (int iRole = 0; iRole < Count; iRole++)
 			{
-				//m_MeshStates[iRole].LocalPosition = RandomUtility.RandomInSphere(DisperseRadius);
-				//m_MeshStates[iRole].LocalRotation = RandomUtility.RandomEulerAngles() * Mathf.Deg2Rad;
-				//m_MeshStates[iRole].LocalScale = RandomUtility.RandomScale(MinScale, MaxScale, ScaleMaxOffset);
-
-				m_MeshStates[iRole].LocalPosition = Vector3.zero;
-				m_MeshStates[iRole].LocalRotation = new Vector3(0, 0, 30);
-				m_MeshStates[iRole].LocalScale = Vector3.one;
-
+				m_MeshStates[iRole].LocalPosition = RandomUtility.RandomInSphere(DisperseRadius);
+				m_MeshStates[iRole].LocalRotation = RandomUtility.RandomEulerAngles() * Mathf.Deg2Rad;
+				m_MeshStates[iRole].LocalScale = RandomUtility.RandomScale(MinScale, MaxScale, ScaleMaxOffset);
 			}
 
 			m_CB_MeshStates = new ComputeBuffer(Count, Marshal.SizeOf(typeof(MeshState)));

@@ -47,12 +47,11 @@ void CSMain(uint3 id: SV_DispatchThreadID)
         float3 s = _MeshStates[threadIdx].LocalScale;
         
         _MeshStates[threadIdx].Display = 0;
-        //if(distanceToCamera < _Param1.x)
-        //{
-        //    t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
-        //}
+        if(distanceToCamera < _Param1.x)
+        {
+            t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
+        }
         
-        // FIXME: 这里的旋转计算错了，反正旋转也是随机的，错了也不影响效果，暂时先不管。之后有时间了再修
         // scale
         float4x4 mat_local_s = {
             s.x, 0, 0, 0,
@@ -62,8 +61,8 @@ void CSMain(uint3 id: SV_DispatchThreadID)
         };
         // rotation z
         float4x4 mat_local_rz = {
-            cos(r.z), sin(r.z), 0, 0,
-            - sin(r.z), cos(r.z), 0, 0,
+            cos(r.z), -sin(r.z), 0, 0,
+             sin(r.z), cos(r.z), 0, 0,
             0, 0, 1, 0,
             0, 0, 0, 1
         };
