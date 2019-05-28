@@ -59,7 +59,7 @@ namespace BatchRendering
 		/// <summary>
 		/// 会显示Mesh的最大距离，超过这个距离，Mesh会被放在一个不可能看到的位置
 		/// </summary>
-		public float MaxDisplayDistanceToCamera;
+		public float MaxDisplayDistanceToCamera;		
 #if UNITY_EDITOR
 		/// <summary>
 		/// Scene、Game窗口的MVP矩阵公用一块显存，而计算Scene在Game之后
@@ -71,6 +71,11 @@ namespace BatchRendering
 		///			缺点：只能在一个窗口预览效果
 		/// </summary>
 		public RendererIn MyRendererIn;
+		/// <summary>
+		/// true: 每次更新都会Dispatch
+		/// false: 只有MVP改变时Dispatch
+		/// </summary>
+		public bool IsUpdateDispatch = false;
 #endif
 
 		/// <summary>
@@ -113,6 +118,10 @@ namespace BatchRendering
 		/// 当前节点
 		/// </summary>
 		private Transform m_Transform;
+		/// <summary>
+		/// 上一帧的MVP矩阵
+		/// </summary>
+		private Matrix4x4 m_LastMVP;
 
 		/// <summary>
 		/// 开始渲染，流程：
@@ -130,7 +139,7 @@ namespace BatchRendering
 			m_MeshStates = new MeshState[Count];
 			for (int iRole = 0; iRole < Count; iRole++)
 			{
-				m_MeshStates[iRole].LocalPosition = RandomUtility.RandomInSphere(DisperseRadius);
+				m_MeshStates[iRole].LocalPosition = Random.insideUnitSphere * DisperseRadius;
 				m_MeshStates[iRole].LocalRotation = RandomUtility.RandomEulerAngles() * Mathf.Deg2Rad;
 				m_MeshStates[iRole].LocalScale = RandomUtility.RandomScale(MinScale, MaxScale, ScaleMaxOffset);
 			}
@@ -151,6 +160,8 @@ namespace BatchRendering
 			Material.SetBuffer(CS_MESH_STATES_NAME, m_CB_MeshStates);
 
 			m_LimitBounds = new Bounds(Vector3.zero, Vector3.one * DisperseRadius * 2);
+
+			m_LastMVP = Matrix4x4.identity;
 #if UNITY_EDITOR
 			UnityEditor.SceneView.onSceneGUIDelegate += OnSceneGUI;
 #endif
@@ -220,13 +231,23 @@ namespace BatchRendering
 			Matrix4x4 mat_M = transform.localToWorldMatrix;
 			Matrix4x4 mat_V = camera.worldToCameraMatrix;
 			Matrix4x4 mat_P = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
-			m_GlobalState[0].MatM = mat_M;
-			m_GlobalState[0].MatMVP = mat_P * mat_V * mat_M;
-			m_GlobalState[0].CameraLocalPosition = transform.InverseTransformPoint(camera.transform.position);
-			m_GlobalState[0].CameraLocalForward = transform.InverseTransformDirection(camera.transform.forward);
-			m_CB_GlobalState.SetData(m_GlobalState);
+			Matrix4x4 mat_MVP = mat_P * mat_V * mat_M;
+			if (
+#if UNITY_EDITOR
+				IsUpdateDispatch
+#endif
+				|| mat_MVP != m_LastMVP)
+			{
+				m_LastMVP = mat_MVP;
 
-			ComputeShader.Dispatch(m_CS_MainKernel, Count, 1, 1);
+				m_GlobalState[0].MatM = mat_M;
+				m_GlobalState[0].MatMVP = m_LastMVP;
+				m_GlobalState[0].CameraLocalPosition = transform.InverseTransformPoint(camera.transform.position);
+				m_GlobalState[0].CameraLocalForward = transform.InverseTransformDirection(camera.transform.forward);
+				m_CB_GlobalState.SetData(m_GlobalState);
+
+				ComputeShader.Dispatch(m_CS_MainKernel, Count, 1, 1);
+			}
 		}
 
 		/// <summary>

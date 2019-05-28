@@ -90,12 +90,12 @@ void CSMain(uint3 id: SV_DispatchThreadID)
         // 模型空间到父节点空间的平移旋转矩阵
         float4x4 mat_local_tr = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mat_local_rz)));
         // 模型空间到父节点空间的平移旋转缩放
-        float4x4 mat_local_trs = mul(mat_local_t, mul(mat_local_ry, mul(mat_local_rx, mul(mat_local_rz, mat_local_s))));
+        float4x4 mat_local_trs = mul(mat_local_tr, mat_local_s);
         _MeshStates[threadIdx].MatM = mul(_GlobalState[0].MatM, mat_local_tr);
         _MeshStates[threadIdx].MatMVP = mul(_GlobalState[0].MatMVP, mat_local_trs);
     }
     else
     {
-        _MeshStates[threadIdx].Display = 1;
+		_MeshStates[threadIdx].Display = 1;
     }
 }

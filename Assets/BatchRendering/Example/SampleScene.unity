@@ -136,7 +136,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 141694386}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 319d2fe34a804e245819465c9505ea59, type: 3}
   m_Name: 
@@ -931,7 +931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 066327149626e4944b08bb19ca0d7752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 0.05
+  Speed: 1
   AngleSpeed: 30
 --- !u!1 &1314377072
 GameObject:
@@ -1258,14 +1258,15 @@ MonoBehaviour:
   Mesh: {fileID: 4300002, guid: de406fdc0ab0e8147b5ab4cd324527c6, type: 3}
   Material: {fileID: 2100000, guid: 2261d45612630bf4db9a5afa99b1252d, type: 2}
   ComputeShader: {fileID: 7200000, guid: 6c6dc3220df96594db3b0a6cd144fc1b, type: 3}
-  Count: 20000
-  DisperseRadius: 36
+  Count: 200000
+  DisperseRadius: 2
   MinScale: {x: 0.1, y: 0.1, z: 0.1}
   MaxScale: {x: 0.5, y: 0.5, z: 0.5}
   ScaleMaxOffset: 0.1
   MinDisplayToCamera: 1
   MaxDisplayDistanceToCamera: 36
   MyRendererIn: 0
+  IsUpdateDispatch: 1
 --- !u!4 &2021711718
 Transform:
   m_ObjectHideFlags: 0
