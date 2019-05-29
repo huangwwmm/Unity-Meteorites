@@ -384,7 +384,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 189925810}
-  m_LocalRotation: {x: 1.955922e-11, y: 0.9998346, z: 0.01818949, w: -0.0000000010752209}
+  m_LocalRotation: {x: -1.9562693e-11, y: 0.9998346, z: 0.01818949, w: 0.0000000010752211}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1256,9 +1256,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Camera: {fileID: 534669904}
   Mesh: {fileID: 4300002, guid: de406fdc0ab0e8147b5ab4cd324527c6, type: 3}
-  Material: {fileID: 2100000, guid: 2261d45612630bf4db9a5afa99b1252d, type: 2}
+  Material: {fileID: 2100000, guid: dea0e7e440778fb47b1033c265faed9f, type: 2}
   ComputeShader: {fileID: 7200000, guid: 6c6dc3220df96594db3b0a6cd144fc1b, type: 3}
-  Count: 200000
+  Count: 20000
   DisperseRadius: 2
   MinScale: {x: 0.1, y: 0.1, z: 0.1}
   MaxScale: {x: 0.5, y: 0.5, z: 0.5}
