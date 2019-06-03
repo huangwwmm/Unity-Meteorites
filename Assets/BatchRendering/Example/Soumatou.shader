@@ -1,4 +1,4 @@
-﻿Shader "Custom/DisperseMesh/Meteorite"
+﻿Shader "Custom/DisperseMesh/Soumatou"
 {
     Properties
     {
@@ -46,6 +46,7 @@
             uniform float _StartFadeOutRange;
             uniform float _FadeOutEndOffset;
             StructuredBuffer<MeshState> _MeshStates;
+            uniform int _ActiveIndex;
             
             struct appdata_custom
             {
@@ -60,7 +61,8 @@
                 uint instanceID: SV_InstanceID;
                 float4 pos: SV_POSITION;
                 float2 uv: TEXCOORD0;
-                float3 normal: NORMAL; 
+                // xyz: normal   w: isActive
+                float4 normal: NORMAL;
             };
             
             v2f vert(appdata_custom v)
@@ -69,14 +71,15 @@
                 o.instanceID = v.instanceID;
                 o.pos = _MeshStates[v.instanceID].Display * float4(99999, 99999, 99999, 0) + mul(_MeshStates[v.instanceID].MatMVP, v.vertex);
                 o.uv = v.texcoord.xy;
-                o.normal = v.normal;
+                o.normal = float4(v.normal.xyz, step(v.instanceID, _ActiveIndex) + step(_ActiveIndex, v.instanceID) - 1);
                 return o;
             }
             
             fixed4 frag(v2f i): SV_Target
             {
                 fixed4 color = tex2D(_MainTex, i.uv);
-                color.xyz *= dot(mul(_MeshStates[i.instanceID].MatM, i.normal), _WorldSpaceLightPos0.xyz);
+                color.xyz *= dot(mul(_MeshStates[i.instanceID].MatM, i.normal.xyz), _WorldSpaceLightPos0.xyz);
+                color.xyz *= i.normal.w + 1;
                 return color;
             }
             ENDCG

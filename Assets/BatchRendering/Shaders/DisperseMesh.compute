@@ -1,4 +1,4 @@
-﻿#pragma kernel CSMain
+﻿#pragma kernel CSUpdate
 
 struct MeshState
 {
@@ -34,7 +34,7 @@ float4 _Param1;
 #define THREAD_Z 1
 
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
-void CSMain(uint3 id: SV_DispatchThreadID)
+void CSUpdate(uint3 id: SV_DispatchThreadID)
 {
     uint threadIdx = id.z * THREAD_X * THREAD_Y + id.y * THREAD_X + id.x;
     

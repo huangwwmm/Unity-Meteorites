@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &274625037294182722
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 274625037294182720}
+  - component: {fileID: 274625037294182723}
+  m_Layer: 0
+  m_Name: Meteorites_Soumatou
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &274625037294182720
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274625037294182722}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &274625037294182723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274625037294182722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfec9134f885d53408cd2f86f1764329, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Camera: {fileID: 0}
+  Mesh: {fileID: 4300002, guid: de406fdc0ab0e8147b5ab4cd324527c6, type: 3}
+  Material: {fileID: 2100000, guid: 5316414a00a158541b6829f662c32e61, type: 2}
+  ComputeShader: {fileID: 7200000, guid: 6c6dc3220df96594db3b0a6cd144fc1b, type: 3}
+  Count: 200
+  MinDisplayToCamera: 1
+  MaxDisplayDistanceToCamera: 36
+  StartRenderingAtEnable: 0
+  MyRendererIn: 1
+  IsUpdateDispatch: 1
+  DisperseRadius: 10
+  Scale: {x: 1, y: 1, z: 1}
+  UpdateIntervalTime: 1
+  ActiveIndexPropertyName: _ActiveIndex
