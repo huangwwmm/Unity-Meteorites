@@ -47,11 +47,11 @@ MonoBehaviour:
   Mesh: {fileID: 4300002, guid: de406fdc0ab0e8147b5ab4cd324527c6, type: 3}
   Material: {fileID: 2100000, guid: dea0e7e440778fb47b1033c265faed9f, type: 2}
   ComputeShader: {fileID: 7200000, guid: 6c6dc3220df96594db3b0a6cd144fc1b, type: 3}
-  Count: 500
+  Count: 10000
   MinDisplayToCamera: 1
   MaxDisplayDistanceToCamera: 36
   StartRenderingAtEnable: 1
-  MyRendererIn: 1
+  MyRendererIn: 0
   IsUpdateDispatch: 1
   DisperseRadius: 5
   MinScale: {x: 0.1, y: 0.1, z: 0.1}

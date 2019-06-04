@@ -43,14 +43,13 @@ void CSUpdate(uint3 id: SV_DispatchThreadID)
     float distanceToCamera = dot(_GlobalState[0].CameraLocalForward, me2camera);
     if (distanceToCamera < _Param1.y && distanceToCamera > 0)
     {
+        _MeshStates[threadIdx].Display = 0;
+
         float3 r = _MeshStates[threadIdx].LocalRotation;
         float3 s = _MeshStates[threadIdx].LocalScale;
         
-        _MeshStates[threadIdx].Display = 0;
-        if(distanceToCamera < _Param1.x)
-        {
-            t = _GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera);
-        }
+        int tCompareMinDis = step(distanceToCamera, _Param1.x);
+        t = t * (1 - tCompareMinDis) + tCompareMinDis * (_GlobalState[0].CameraLocalPosition + _Param1.x * normalize(me2camera));
         
         // scale
         float4x4 mat_local_s = {
